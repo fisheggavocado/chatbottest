@@ -1,5 +1,7 @@
 # PDF를 LlamaIndex의 Document 형식으로 로드하는 커스텀 리더
-# 하이브리드 추출: 먼저 PyMuPDF로 텍스트 레이어를 직접 뽑고, 부족하면(스캔 이미지) gpt-5-mini 비전 API로 해석한다.
+# 하이브리드 추출: 먼저 PyMuPDF로 텍스트 레이어를 직접 뽑고,
+# - 텍스트가 부족하면(스캔 이미지) 페이지 전체를 gpt-5-mini 비전 API로 해석하고,
+# - 텍스트는 충분해도 로고/아이콘보다 큰 삽입 이미지가 있으면 그림 설명만 비전 API로 보강해 덧붙인다.
 # 관련 저수준 로직은 pdf_reader.py에 있다.
 # main.py는 스트리밍 저장/재개를 위해 load_data() 대신 iter_pages()로 한 페이지씩 처리한다.
 
@@ -11,7 +13,13 @@ from llama_index.core import Document
 from llama_index.core.readers.base import BaseReader
 
 from config import MIN_EXTRACTABLE_TEXT_LENGTH, PDF_IMAGE_DPI
-from pdf_reader import extract_page_text, image_to_text, page_to_png_bytes
+from pdf_reader import (
+    describe_page_images,
+    extract_page_text,
+    has_significant_image,
+    image_to_text,
+    page_to_png_bytes,
+)
 
 
 class VisionPDFReader(BaseReader):
@@ -35,11 +43,17 @@ class VisionPDFReader(BaseReader):
             page = doc[page_index]
 
             extracted = extract_page_text(page)
-            if len(extracted) >= MIN_EXTRACTABLE_TEXT_LENGTH:
-                text = extracted
-            else:
+            if len(extracted) < MIN_EXTRACTABLE_TEXT_LENGTH:
+                # 텍스트 레이어가 부족한 스캔 페이지: 전체를 비전 API로 대체 추출한다.
                 image_bytes = page_to_png_bytes(page, dpi)
                 text = image_to_text(image_bytes)
+            elif has_significant_image(page):
+                # 텍스트는 충분하지만 차트/다이어그램 등 삽입 이미지가 있는 페이지: 그림 설명만 보강해 덧붙인다.
+                image_bytes = page_to_png_bytes(page, dpi)
+                image_description = describe_page_images(image_bytes)
+                text = f"{extracted}\n\n{image_description}" if image_description else extracted
+            else:
+                text = extracted
 
             document = Document(
                 text=text, metadata={"source": pdf_path.name, "page": page_index + 1}

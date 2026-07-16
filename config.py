@@ -41,7 +41,13 @@ MIN_EXTRACTABLE_TEXT_LENGTH = 30
 # 로고·아이콘처럼 작은 장식 이미지는 이 값 미만이라 비전 API 추가 호출 대상에서 제외된다.
 MIN_IMAGE_AREA_RATIO = 0.05
 
-DEVICE = "cuda"  # BGE-M3 실행 장치, GPU가 없으면 "cpu"로 변경
+DEVICE = "cuda"  # BGE-M3/리랭커 실행 장치, GPU가 없으면 "cpu"로 변경
+
+# 검색: bi-encoder(BGE-M3)+BM25를 RRF로 융합해 CANDIDATE_TOP_K개 후보를 뽑은 뒤,
+# cross-encoder(RERANK_MODEL)로 재정렬해 RERANK_TOP_K개만 최종 반환한다.
+RERANK_MODEL = os.getenv("RERANK_MODEL", "BAAI/bge-reranker-v2-m3")
+CANDIDATE_TOP_K = 30  # 리랭킹 전, bi-encoder/BM25 단계에서 뽑을 후보 개수
+RERANK_TOP_K = 10     # 크로스 인코더 리랭킹 후 최종적으로 반환할 개수
 
 SECONDS_PER_PAGE_ESTIMATE = 6  # 실제 처리 전 대략적인 예상 시간 계산에 쓰는 가정치(초/페이지)
 PERSIST_EVERY_N_PAGES = 1      # 몇 페이지마다 인덱스를 디스크에 저장할지 (1 = 매 페이지 즉시 저장)

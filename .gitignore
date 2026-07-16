@@ -1,0 +1,21 @@
+# 환경변수 / 키
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 생성되는 인덱스·체크포인트 (용량 크고 재생성 가능)
+output/
+
+# HF Dataset에서 동기화한 PDF 로컬 캐시
+hf_pdfs/
+
+# 대화 로그 (민감할 수 있음)
+chat_log/
+
+# OS
+.DS_Store
+Thumbs.db

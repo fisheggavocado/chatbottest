@@ -1,0 +1,49 @@
+# PDF를 LlamaIndex의 Document 형식으로 로드하는 커스텀 리더
+# 하이브리드 추출: 먼저 PyMuPDF로 텍스트 레이어를 직접 뽑고, 부족하면(스캔 이미지) gpt-5-mini 비전 API로 해석한다.
+# 관련 저수준 로직은 pdf_reader.py에 있다.
+# main.py는 스트리밍 저장/재개를 위해 load_data() 대신 iter_pages()로 한 페이지씩 처리한다.
+
+from pathlib import Path
+from typing import Iterator, List, Tuple
+
+import fitz  # PyMuPDF
+from llama_index.core import Document
+from llama_index.core.readers.base import BaseReader
+
+from config import MIN_EXTRACTABLE_TEXT_LENGTH, PDF_IMAGE_DPI
+from pdf_reader import extract_page_text, image_to_text, page_to_png_bytes
+
+
+class VisionPDFReader(BaseReader):
+    """PDF 페이지에서 텍스트를 하이브리드로 추출해(텍스트 레이어 우선, 부족하면 비전 API) Document로 반환한다."""
+
+    def load_data(self, pdf_path: Path, dpi: int = PDF_IMAGE_DPI) -> List[Document]:
+        """BaseReader 인터페이스 호환용. 내부적으로 iter_pages()를 모두 소비해 리스트로 반환한다."""
+        return [document for _, document in self.iter_pages(pdf_path, dpi)]
+
+    def iter_pages(
+        self, pdf_path: Path, dpi: int = PDF_IMAGE_DPI, start_page: int = 0
+    ) -> Iterator[Tuple[int, Document]]:
+        """PDF를 페이지 단위로 순차 처리하며 (0-indexed 페이지 번호, Document)를 하나씩 반환한다.
+
+        start_page를 지정하면 이전에 처리한 페이지는 건너뛰고 그 다음부터 이어서 처리한다 (재개용).
+        """
+        pdf_path = Path(pdf_path)
+        doc = fitz.open(pdf_path)
+
+        for page_index in range(start_page, len(doc)):
+            page = doc[page_index]
+
+            extracted = extract_page_text(page)
+            if len(extracted) >= MIN_EXTRACTABLE_TEXT_LENGTH:
+                text = extracted
+            else:
+                image_bytes = page_to_png_bytes(page, dpi)
+                text = image_to_text(image_bytes)
+
+            document = Document(
+                text=text, metadata={"source": pdf_path.name, "page": page_index + 1}
+            )
+            yield page_index, document
+
+        doc.close()

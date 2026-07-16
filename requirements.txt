@@ -1,0 +1,11 @@
+openai>=1.0.0
+python-dotenv
+pymupdf
+numpy
+torch
+transformers
+FlagEmbedding
+rank_bm25
+kiwipiepy
+llama-index-core
+huggingface_hub

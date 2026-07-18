@@ -7,6 +7,8 @@ name: Build and push Docker image
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**.md"  # 문서만 바뀐 push는 이미지를 다시 빌드하지 않는다
   workflow_dispatch: {}
 
 jobs:

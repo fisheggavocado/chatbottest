@@ -20,7 +20,8 @@ HF_TOKEN = os.getenv("HF_TOKEN")
 
 # TODO: 추후 실제 PDF 폴더 경로로 교체
 PDF_DIR = r"D:\누리\이어드림 AI 교육\수업 자료\5강"  # 예: r"D:\docs\pdfs"  (임베딩할 PDF들이 들어있는 폴더)
-OUTPUT_DIR = r"D:\누리\이어드림 AI 교육\project\first_project\output"  # 임베딩 결과(인덱스)를 저장할 폴더
+# 컨테이너/클라우드 환경에서는 환경변수 OUTPUT_DIR로 저장 경로를 덮어쓸 수 있다 (예: /data/output).
+OUTPUT_DIR = os.getenv("OUTPUT_DIR", r"D:\누리\이어드림 AI 교육\project\first_project\output")
 
 # Hugging Face Dataset repo id (예: "your-username/pdf-dataset") — .env의 HF_REPO_ID에 한 번만 설정
 HF_REPO_ID = os.getenv("HF_REPO_ID")
@@ -41,7 +42,7 @@ MIN_EXTRACTABLE_TEXT_LENGTH = 30
 # 로고·아이콘처럼 작은 장식 이미지는 이 값 미만이라 비전 API 추가 호출 대상에서 제외된다.
 MIN_IMAGE_AREA_RATIO = 0.05
 
-DEVICE = "cuda"  # BGE-M3/리랭커 실행 장치, GPU가 없으면 "cpu"로 변경
+DEVICE = os.getenv("DEVICE", "cuda")  # BGE-M3/리랭커 실행 장치, GPU가 없으면 "cpu"로 변경 (환경변수로 덮어쓰기 가능)
 
 # 검색: bi-encoder(BGE-M3)+BM25를 RRF로 융합해 CANDIDATE_TOP_K개 후보를 뽑은 뒤,
 # cross-encoder(RERANK_MODEL)로 재정렬해 RERANK_TOP_K개만 최종 반환한다.

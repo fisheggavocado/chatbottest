@@ -13,7 +13,9 @@ from openai import OpenAI
 
 from config import MIN_IMAGE_AREA_RATIO, OPENAI_API_KEY, OPENAI_BASE_URL, VISION_MODEL
 
-client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL)
+# 기본 timeout(600초)은 네트워크가 불안정한 노드에서 한 페이지를 수십 분씩 멈추게 할 수 있어
+# 시도당 120초로 줄이고 재시도를 늘린다. 최종 실패 시 예외로 중단되지만, 재시작하면 checkpoint에서 재개된다.
+client = OpenAI(api_key=OPENAI_API_KEY, base_url=OPENAI_BASE_URL, timeout=120.0, max_retries=5)
 
 # 비전 모델에게 페이지 이미지를 해석시킬 때 사용할 지시문
 PAGE_PROMPT = """다음은 PDF 문서의 한 페이지 이미지입니다.

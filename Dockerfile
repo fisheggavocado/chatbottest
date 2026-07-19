@@ -16,7 +16,8 @@ COPY . .
 
 # 컨테이너 기본 출력 경로. 개인 Storage를 /data에 마운트하면 인덱스/checkpoint가 영속된다.
 ENV OUTPUT_DIR=/data/output \
-    HF_HOME=/data/hf_cache
+    HF_HOME=/data/hf_cache \
+    PYTHONUNBUFFERED=1
 
 # gcube 등 배포 플랫폼이 이미지 메타데이터에서 서비스 포트를 읽을 수 있도록 선언한다.
 EXPOSE 8000

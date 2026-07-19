@@ -52,7 +52,8 @@ def main():
     if not str(pdf_dir) or not pdf_dir.exists():
         raise ValueError(f"PDF 폴더 경로를 확인해주세요: '{pdf_dir}'")
 
-    pdf_files = sorted(pdf_dir.glob("*.pdf"))
+    # HF Dataset repo는 PDF를 하위 폴더에 둘 수 있으므로 재귀적으로 찾는다.
+    pdf_files = sorted(pdf_dir.rglob("*.pdf"))
     if args.limit:
         pdf_files = pdf_files[: args.limit]
     if not pdf_files:
